@@ -480,6 +480,18 @@
       .headline { font-size: clamp(2.5rem, 10vw, 4rem); }
       .edge-line { display: none; }
     }
+
+    /* allow scrolling on short viewports */
+    @media (max-height: 720px) {
+      html, body {
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      .hero {
+        height: auto;
+        min-height: 100dvh;
+      }
+    }
   </style>
 </head>
 <body>
