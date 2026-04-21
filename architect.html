@@ -234,6 +234,19 @@
       background: rgba(35,47,62,.15);
       position: relative;
     }
+    @media (max-width: 900px) {
+      .aws-region-outer { flex-direction: column !important; align-items: stretch !important; }
+      .aws-side-services-wrap {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        background: rgba(35,47,62,.1);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+      }
+    }
     .aws-region-label {
       position: absolute;
       top: -0.75rem; left: 1rem;
@@ -707,17 +720,36 @@
     }
 
     @media (max-width:900px) {
-      .page { padding: 2rem; }
+      .page { padding: 1.5rem; }
       .tech-grid { grid-template-columns: 1fr 1fr; }
       .principles-grid { grid-template-columns: 1fr; }
       .subnet-row { grid-template-columns: 1fr; }
       .edge-line { display: none; }
-      .sys-be-inner { gap: 0.4rem; }
+      .sys-be-inner { gap: 0.4rem; flex-wrap: wrap; }
+      .sys-row { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+      .sys-lane { max-width: 100% !important; }
+      .infra-diagram { padding: 1.25rem 1rem 1.5rem; }
+      .sys-diagram { padding: 1.25rem 1rem 1.5rem; }
     }
     @media (max-width:600px) {
+      .page { padding: 1rem 0.875rem 4rem; }
       .tech-grid { grid-template-columns: 1fr; }
-      .page-title { font-size: 2.8rem; }
-      .sys-infra-row { gap: 0.75rem; }
+      .page-title { font-size: 2.2rem; }
+      .sys-infra-row { gap: 0.75rem; flex-wrap: wrap; }
+      nav { flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 2rem; }
+      .page-footer { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+      .footer-link:first-child { margin-left: 0; }
+      .infra-chrome-title { font-size: 0.55rem; }
+      .sys-arrows { flex-wrap: wrap; gap: 0.25rem; }
+      .sys-arrow-col { flex: 1 1 auto; min-width: 60px; }
+      .svc-node { min-width: 64px; }
+      .svc-icon-wrap { width: 44px; height: 44px; font-size: 1.1rem; }
+      .sys-be-inner { gap: 0.35rem; }
+      .sys-be-box { min-width: 64px; padding: 0.4rem 0.5rem; }
+      .sys-infra-row .sys-box { min-width: 72px; padding: 0.5rem 0.6rem; }
+      .infra-legend { gap: 0.6rem; }
+      .sys-legend { gap: 0.6rem; }
+      .page-subtitle { font-size: 0.92rem; }
     }
   </style>
 </head>
@@ -793,8 +825,11 @@
             </div>
           </div>
 
+          <!-- AWS REGION + SIDE SERVICES WRAPPER -->
+          <div class="aws-region-outer" style="display:flex;align-items:center;gap:1.25rem;position:relative;z-index:2">
+
           <!-- AWS REGION -->
-          <div class="aws-region" style="position:relative;z-index:2">
+          <div class="aws-region" style="flex:1;position:relative">
             <div class="aws-region-label">
               <span style="color:#f97316">▸</span> AWS Region — ap-southeast-1
             </div>
@@ -904,8 +939,10 @@
 
             </div><!-- /vpc-box -->
 
+          </div><!-- /aws-region -->
+
             <!-- Side services (ECR, SSM, CW, S3, ACM) -->
-            <div style="position:absolute;right:-9.5rem;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.75rem">
+            <div class="aws-side-services-wrap" style="display:flex;flex-direction:column;gap:.75rem;flex-shrink:0">
               <div class="svc-node" style="min-width:80px">
                 <div class="svc-icon-wrap" style="--svc-bg:rgba(199,19,31,.08);--svc-border:rgba(199,19,31,.3);width:44px;height:44px;font-size:1rem">📦</div>
                 <div class="svc-title">ECR</div>
@@ -928,7 +965,7 @@
               </div>
             </div>
 
-          </div><!-- /aws-region -->
+          </div><!-- /aws-region-outer -->
 
           <!-- LEGEND -->
           <div class="infra-legend">
