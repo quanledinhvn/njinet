@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Njinet — Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #08090f;
+      --surface:   #10131a;
+      --card:      #1c2026;
+      --border:    #2a2f3a;
+      --primary:   #aac7ff;
+      --primary-2: #1275e2;
+      --cyan:      #22d3ee;
+      --teal:      #2dd4bf;
+      --rose:      #fb7185;
+      --amber:     #fbbf24;
+      --violet:    #a78bfa;
+      --green:     #34d399;
+      --orange:    #f97316;
+      --text:      #e0e2eb;
+      --muted:     #8b919f;
+      --mono:      'Space Mono', monospace;
+      --sans:      'Syne', sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow-x: hidden;
+    }
+
+    #canvas {
+      position: fixed; inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none; z-index: 1;
+      animation: drift var(--dur, 20s) ease-in-out infinite alternate;
+    }
+    .blob-1 { width:700px;height:700px;top:-200px;right:-100px;background:radial-gradient(ellipse,rgba(18,117,226,.12) 0%,transparent 70%);--dur:18s; }
+    .blob-2 { width:500px;height:500px;bottom:10%;left:-100px;background:radial-gradient(ellipse,rgba(34,211,238,.08) 0%,transparent 70%);--dur:24s; }
+    .blob-3 { width:400px;height:400px;top:50%;left:40%;background:radial-gradient(ellipse,rgba(167,139,250,.07) 0%,transparent 70%);--dur:16s; }
+
+    .edge-line {
+      position: fixed;
+      background: linear-gradient(to bottom, transparent, var(--border), transparent);
+      width: 1px; top: 0; bottom: 0;
+      pointer-events: none; z-index: 5;
+    }
+    .edge-line.left  { left: 3rem; }
+    .edge-line.right { right: 3rem; }
+
+    .page {
+      position: relative; z-index: 10;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 2.5rem 4rem 6rem;
+    }
+
+    /* NAV */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4rem;
+    }
+    .nav-logo {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--primary);
+      display: flex; align-items: center; gap: 0.5rem;
+      text-decoration: none;
+    }
+    .nav-logo::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      animation: blink 2s ease-in-out infinite;
+    }
+    .nav-breadcrumb {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .nav-breadcrumb span { color: var(--border); }
+
+    /* HEADER */
+    .page-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 1.25rem;
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.2s forwards;
+    }
+    .page-title {
+      font-family: var(--sans);
+      font-size: clamp(2.8rem, 5vw, 5rem);
+      font-weight: 900;
+      line-height: 0.92;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.7s ease 0.35s forwards;
+    }
+    .page-title em {
+      font-style: normal;
+      color: transparent;
+      -webkit-text-stroke: 1.5px var(--primary);
+    }
+    .page-subtitle {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--muted);
+      max-width: 52ch;
+      margin-bottom: 3rem;
+      opacity: 0;
+      animation: fadeUp 0.7s ease 0.5s forwards;
+    }
+
+    /* SECTION LABEL */
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 1.5rem;
+      margin-top: 3rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1; height: 1px;
+      background: var(--border);
+    }
+
+    /* ── AWS INFRA DIAGRAM ── */
+    .infra-wrap {
+      opacity: 0;
+      animation: fadeIn 0.8s ease 0.6s forwards;
+    }
+
+    .infra-diagram {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      padding: 2rem 2rem 2.5rem;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(170,199,255,.05),
+        0 40px 100px rgba(0,0,0,.5),
+        inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .infra-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(170,199,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(170,199,255,.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      border-radius: 1.5rem;
+      pointer-events: none;
+    }
+
+    .infra-scan {
+      position: absolute; left: 0; right: 0; height: 1px;
+      background: linear-gradient(to right, transparent, var(--cyan), transparent);
+      opacity: 0;
+      animation: archScan 8s ease-in-out 1.5s infinite;
+    }
+
+    .infra-chrome {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      position: relative; z-index: 2;
+    }
+    .chrome-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .infra-chrome-title {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-left: auto; margin-right: auto;
+    }
+
+    /* DIAGRAM LAYOUT */
+    .infra-body {
+      position: relative; z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── ROW: CLIENT + CLOUDFLARE ── */
+    .infra-top-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* AWS REGION BOX */
+    .aws-region {
+      border: 1.5px solid rgba(35,47,62,.8);
+      border-radius: 1.25rem;
+      padding: 1.5rem;
+      background: rgba(35,47,62,.15);
+      position: relative;
+    }
+    .aws-region-label {
+      position: absolute;
+      top: -0.75rem; left: 1rem;
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #8c9bab;
+      background: var(--surface);
+      padding: 0 0.5rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+
+    /* VPC BOX */
+    .vpc-box {
+      border: 1.5px solid rgba(140,79,255,.4);
+      border-radius: 1rem;
+      padding: 1.25rem;
+      background: rgba(140,79,255,.04);
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    .vpc-label {
+      position: absolute;
+      top: -0.6rem; left: 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #a78bfa;
+      background: var(--surface);
+      padding: 0 0.4rem;
+    }
+
+    /* SUBNET */
+    .subnet-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .subnet {
+      border: 1px dashed var(--subnet-color, #147EBA);
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+      background: rgba(0,0,0,.15);
+      position: relative;
+    }
+    .subnet-label {
+      position: absolute;
+      top: -0.55rem; left: 0.6rem;
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--subnet-color, #147EBA);
+      background: var(--surface);
+      padding: 0 0.35rem;
+    }
+    .subnet-inner {
+      display: flex;
+      justify-content: center;
+      padding-top: 0.25rem;
+    }
+
+    /* outside AWS services */
+    .aws-side-services {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    /* service node */
+    .svc-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      min-width: 80px;
+    }
+    .svc-icon-wrap {
+      width: 52px; height: 52px;
+      border-radius: 0.75rem;
+      background: var(--svc-bg, var(--card));
+      border: 1px solid var(--svc-border, var(--border));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem;
+      transition: box-shadow 0.25s, transform 0.25s;
+      cursor: default;
+      position: relative;
+      box-shadow: 0 0 0 0 var(--svc-glow, transparent);
+    }
+    .svc-icon-wrap:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 18px var(--svc-glow, transparent);
+    }
+    .svc-title {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+      white-space: nowrap;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .svc-sub {
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      color: var(--muted);
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    /* connection arrow row */
+    .conn-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin: 0.3rem 0;
+    }
+    .conn-line {
+      height: 1px;
+      width: 40px;
+      background: linear-gradient(to right, var(--conn-color, var(--border)), transparent);
+    }
+    .conn-line.rev {
+      background: linear-gradient(to left, var(--conn-color, var(--border)), transparent);
+    }
+    .conn-label {
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      background: var(--surface);
+      padding: 1px 6px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .conn-vert {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .conn-vert-line {
+      width: 1px;
+      height: 20px;
+      background: linear-gradient(to bottom, var(--cv-color, var(--border)), transparent);
+    }
+    .conn-arrow-down {
+      width: 0; height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--cv-color, var(--border));
+    }
+
+    /* LEGEND */
+    .infra-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      position: relative; z-index: 2;
+    }
+
+    /* ── SYSTEM CONTEXT DIAGRAM ── */
+    .sys-wrap {
+      opacity: 0;
+      animation: fadeIn 0.8s ease 0.7s forwards;
+    }
+    .sys-diagram {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      padding: 2rem 2rem 2.5rem;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(170,199,255,.05),
+        0 40px 100px rgba(0,0,0,.5),
+        inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .sys-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(170,199,255,.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(170,199,255,.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+      border-radius: 1.5rem;
+      pointer-events: none;
+    }
+
+    /* rows */
+    .sys-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      position: relative; z-index: 2;
+      margin-bottom: 0;
+    }
+
+    /* layer swim-lane */
+    .sys-lane {
+      border-radius: 1rem;
+      padding: 1rem 1.25rem 1.25rem;
+      position: relative;
+      flex: 1;
+    }
+    .sys-lane-label {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.85rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .sys-lane-label::after {
+      content: '';
+      flex: 1; height: 1px;
+      background: var(--border);
+    }
+    .sys-lane-inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* box node */
+    .sys-box {
+      border-radius: 0.75rem;
+      padding: 0.65rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      min-width: 90px;
+      cursor: default;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .sys-box:hover { transform: translateY(-2px); }
+    .sys-box-icon { font-size: 1.3rem; }
+    .sys-box-name {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text);
+      white-space: nowrap;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .sys-box-sub {
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      color: var(--muted);
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    /* connector arrows between rows */
+    .sys-arrows {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0;
+      position: relative; z-index: 2;
+      margin: 0.2rem 0;
+    }
+    .sys-arrow-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      flex: 1;
+    }
+    .sys-arrow-line {
+      width: 1px;
+      height: 18px;
+    }
+    .sys-arrow-label {
+      font-family: var(--mono);
+      font-size: 0.46rem;
+      letter-spacing: 0.08em;
+      padding: 1px 5px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      white-space: nowrap;
+    }
+    .sys-arrow-tip {
+      width: 0; height: 0;
+      border-left: 3px solid transparent;
+      border-right: 3px solid transparent;
+    }
+
+    /* backend internals row */
+    .sys-be-inner {
+      display: flex;
+      align-items: stretch;
+      gap: 0.6rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .sys-be-box {
+      border-radius: 0.6rem;
+      padding: 0.55rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      min-width: 75px;
+    }
+    .sys-be-box-name {
+      font-family: var(--mono);
+      font-size: 0.52rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.35;
+    }
+    .sys-be-box-sub {
+      font-family: var(--mono);
+      font-size: 0.46rem;
+      color: var(--muted);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* infra bottom row */
+    .sys-infra-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .sys-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      position: relative; z-index: 2;
+    }
+
+    @keyframes sysFlow {
+      0%   { opacity: 0; transform: scaleY(0); }
+      20%  { opacity: 1; }
+      80%  { opacity: 1; }
+      100% { opacity: .4; transform: scaleY(1); }
+    }
+    .sys-arrow-line-anim {
+      animation: sysFlow 2.5s ease infinite alternate;
+      transform-origin: top;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 2px;
+      background: var(--ld-color);
+    }
+
+    /* ── TECH STACK CARDS ── */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    .tech-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .tech-card:hover {
+      border-color: var(--card-accent, var(--border));
+      transform: translateY(-3px);
+    }
+    .tech-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--card-accent, transparent);
+      opacity: 0.7;
+      border-radius: 1rem 1rem 0 0;
+    }
+    .tech-card-icon { font-size: 1.5rem; margin-bottom: 0.75rem; display: block; }
+    .tech-card-title { font-family: var(--sans); font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .tech-card-sub { font-family: var(--mono); font-size: 0.6rem; letter-spacing: .15em; text-transform: uppercase; color: var(--card-accent, var(--muted)); margin-bottom: 0.75rem; }
+    .tech-card-desc { font-size: 0.85rem; line-height: 1.6; color: var(--muted); }
+    .tech-tag {
+      display: inline-flex; align-items: center;
+      margin-top: 0.75rem; margin-right: 0.35rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 100px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    /* ── PRINCIPLES ── */
+    .principles-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 4rem;
+    }
+    .principle-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.5rem 1.75rem;
+      display: flex; gap: 1rem; align-items: flex-start;
+      opacity: 0;
+      transition: border-color 0.2s;
+    }
+    .principle-card:hover { border-color: rgba(170,199,255,.2); }
+    .principle-num { font-family: var(--mono); font-size: 2rem; font-weight: 700; color: var(--border); line-height: 1; flex-shrink: 0; margin-top: -0.15rem; }
+    .principle-title { font-family: var(--sans); font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .principle-desc { font-size: 0.85rem; line-height: 1.65; color: var(--muted); }
+
+    /* FOOTER */
+    .page-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-left { font-family: var(--mono); font-size: 0.65rem; letter-spacing: .15em; color: var(--muted); }
+    .footer-link { font-family: var(--mono); font-size: 0.65rem; letter-spacing: .1em; color: var(--muted); text-decoration: none; margin-left: 1rem; transition: color .2s; }
+    .footer-link:hover { color: var(--primary); }
+
+    /* KEYFRAMES */
+    @keyframes blink { 0%,100%{opacity:1}50%{opacity:.3} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn { from{opacity:0}to{opacity:1} }
+    @keyframes drift { from{transform:translate(0,0) scale(1)}to{transform:translate(30px,20px) scale(1.1)} }
+    @keyframes archScan { 0%{top:0;opacity:0}5%{opacity:.25}95%{opacity:.25}100%{top:100%;opacity:0} }
+    @keyframes fadeUpCard { from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)} }
+    @keyframes pulsePort {
+      0%,100%{opacity:.5}
+      50%{opacity:1}
+    }
+
+    @media (max-width:900px) {
+      .page { padding: 2rem; }
+      .tech-grid { grid-template-columns: 1fr 1fr; }
+      .principles-grid { grid-template-columns: 1fr; }
+      .subnet-row { grid-template-columns: 1fr; }
+      .edge-line { display: none; }
+      .sys-be-inner { gap: 0.4rem; }
+    }
+    @media (max-width:600px) {
+      .tech-grid { grid-template-columns: 1fr; }
+      .page-title { font-size: 2.8rem; }
+      .sys-infra-row { gap: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="edge-line left"></div>
+  <div class="edge-line right"></div>
+  <canvas id="canvas"></canvas>
+
+  <div class="page">
+
+    <nav>
+      <a href="/" class="nav-logo">njinet</a>
+      <div class="nav-breadcrumb">
+        <span>docs</span> / architect
+      </div>
+    </nav>
+
+    <p class="page-eyebrow">System Design</p>
+    <h1 class="page-title"><em>Architecture</em><br>Overview</h1>
+    <p class="page-subtitle">
+      AWS ap-southeast-1 deployment — Cloudflare CDN terminates TLS, traffic flows through dual ALBs into ECS Fargate containers backed by ElastiCache Redis.
+    </p>
+
+    <!-- ── INFRA DIAGRAM ── -->
+    <div class="section-label">Infrastructure · AWS ap-southeast-1</div>
+
+    <div class="infra-wrap">
+      <div class="infra-diagram">
+        <div class="infra-grid"></div>
+        <div class="infra-scan"></div>
+
+        <!-- chrome bar -->
+        <div class="infra-chrome">
+          <div class="chrome-dot" style="background:#ff5f57"></div>
+          <div class="chrome-dot" style="background:#febc2e"></div>
+          <div class="chrome-dot" style="background:#28c840"></div>
+          <div class="infra-chrome-title">njinet · infrastructure · ap-southeast-1</div>
+        </div>
+
+        <div class="infra-body">
+
+          <!-- ROW: Client + Cloudflare (outside AWS) -->
+          <div style="display:flex;justify-content:center;align-items:flex-end;gap:2.5rem;margin-bottom:.5rem;position:relative;z-index:2;">
+            <!-- Client -->
+            <div class="svc-node">
+              <div class="svc-icon-wrap" style="--svc-bg:rgba(34,211,238,.08);--svc-border:rgba(34,211,238,.3);--svc-glow:rgba(34,211,238,.25)">👤</div>
+              <div class="svc-title">Client</div>
+              <div class="svc-sub">browser / app</div>
+            </div>
+            <!-- arrow to CF -->
+            <div style="display:flex;align-items:center;gap:.25rem;margin-bottom:1.5rem">
+              <div style="width:40px;height:1px;background:linear-gradient(to right,rgba(34,211,238,.5),rgba(244,129,32,.5))"></div>
+              <span style="font-family:var(--mono);font-size:.5rem;color:var(--muted);background:var(--surface);padding:1px 5px;border:1px solid var(--border);border-radius:100px">HTTPS</span>
+              <div style="width:40px;height:1px;background:linear-gradient(to right,rgba(244,129,32,.5),rgba(244,129,32,.5))"></div>
+            </div>
+            <!-- Cloudflare -->
+            <div class="svc-node">
+              <div class="svc-icon-wrap" style="--svc-bg:rgba(244,129,32,.1);--svc-border:rgba(244,129,32,.4);--svc-glow:rgba(244,129,32,.3)">🔶</div>
+              <div class="svc-title">Cloudflare</div>
+              <div class="svc-sub">api.njinet.site</div>
+            </div>
+          </div>
+
+          <!-- arrow down into AWS -->
+          <div style="display:flex;justify-content:center;margin:.25rem 0 .5rem;position:relative;z-index:2">
+            <div class="conn-vert">
+              <div class="conn-vert-line" style="height:24px;--cv-color:rgba(244,129,32,.5)"></div>
+              <div class="conn-arrow-down" style="--cv-color:rgba(244,129,32,.5)"></div>
+            </div>
+          </div>
+
+          <!-- AWS REGION -->
+          <div class="aws-region" style="position:relative;z-index:2">
+            <div class="aws-region-label">
+              <span style="color:#f97316">▸</span> AWS Region — ap-southeast-1
+            </div>
+
+            <!-- VPC -->
+            <div class="vpc-box">
+              <div class="vpc-label">VPC  10.0.0.0/16</div>
+
+              <!-- IGW row -->
+              <div style="display:flex;justify-content:center;margin-bottom:.75rem">
+                <div class="svc-node">
+                  <div class="svc-icon-wrap" style="--svc-bg:rgba(140,79,255,.1);--svc-border:rgba(140,79,255,.4);--svc-glow:rgba(140,79,255,.3)">🌐</div>
+                  <div class="svc-title">Internet<br>Gateway</div>
+                </div>
+              </div>
+
+              <!-- arrow from IGW to ALBs -->
+              <div style="display:flex;justify-content:space-around;align-items:flex-start;margin-bottom:.5rem">
+                <div style="width:1px;height:20px;background:linear-gradient(to bottom,rgba(20,126,186,.7),rgba(20,126,186,.2));margin-left:25%"></div>
+                <div style="width:1px;height:20px;background:linear-gradient(to bottom,rgba(20,126,186,.7),rgba(20,126,186,.2));margin-right:25%"></div>
+              </div>
+
+              <!-- PUBLIC SUBNETS -->
+              <div class="subnet-row">
+                <!-- AZ-1 public -->
+                <div class="subnet" style="--subnet-color:#147EBA">
+                  <div class="subnet-label">Public AZ-1 · 10.0.0.0/24</div>
+                  <div class="subnet-inner" style="gap:1.5rem">
+                    <div class="svc-node">
+                      <div class="svc-icon-wrap" style="--svc-bg:rgba(20,126,186,.1);--svc-border:rgba(20,126,186,.4);--svc-glow:rgba(20,126,186,.3);font-size:1rem">⚖️</div>
+                      <div class="svc-title">ALB  AZ-1</div>
+                    </div>
+                    <div class="svc-node">
+                      <div class="svc-icon-wrap" style="--svc-bg:rgba(140,79,255,.08);--svc-border:rgba(140,79,255,.3);--svc-glow:rgba(140,79,255,.2);font-size:.9rem">🔀</div>
+                      <div class="svc-title">NAT<br>Gateway</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- AZ-2 public -->
+                <div class="subnet" style="--subnet-color:#147EBA">
+                  <div class="subnet-label">Public AZ-2 · 10.0.1.0/24</div>
+                  <div class="subnet-inner">
+                    <div class="svc-node">
+                      <div class="svc-icon-wrap" style="--svc-bg:rgba(20,126,186,.1);--svc-border:rgba(20,126,186,.4);--svc-glow:rgba(20,126,186,.3);font-size:1rem">⚖️</div>
+                      <div class="svc-title">ALB  AZ-2</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- arrows to ECS -->
+              <div style="display:flex;justify-content:space-around;align-items:flex-start;margin:.4rem 0">
+                <div style="display:flex;flex-direction:column;align-items:center">
+                  <div style="width:1px;height:16px;background:linear-gradient(to bottom,rgba(237,113,0,.7),rgba(237,113,0,.2))"></div>
+                  <div style="font-family:var(--mono);font-size:.48rem;color:#f97316;animation:pulsePort 2s infinite">:3000</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center">
+                  <div style="width:1px;height:16px;background:linear-gradient(to bottom,rgba(237,113,0,.7),rgba(237,113,0,.2))"></div>
+                  <div style="font-family:var(--mono);font-size:.48rem;color:#f97316;animation:pulsePort 2s .5s infinite">:3000</div>
+                </div>
+              </div>
+
+              <!-- PRIVATE SUBNETS -->
+              <div class="subnet-row">
+                <!-- AZ-1 private -->
+                <div class="subnet" style="--subnet-color:#3F8624">
+                  <div class="subnet-label">Private AZ-1 · 10.0.10.0/24</div>
+                  <div class="subnet-inner">
+                    <div class="svc-node">
+                      <div class="svc-icon-wrap" style="--svc-bg:rgba(237,113,0,.1);--svc-border:rgba(237,113,0,.4);--svc-glow:rgba(237,113,0,.3)">🐳</div>
+                      <div class="svc-title">ECS Fargate</div>
+                      <div class="svc-sub">NJinet :3000</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- AZ-2 private -->
+                <div class="subnet" style="--subnet-color:#3F8624">
+                  <div class="subnet-label">Private AZ-2 · 10.0.11.0/24</div>
+                  <div class="subnet-inner">
+                    <div class="svc-node">
+                      <div class="svc-icon-wrap" style="--svc-bg:rgba(237,113,0,.1);--svc-border:rgba(237,113,0,.4);--svc-glow:rgba(237,113,0,.3)">🐳</div>
+                      <div class="svc-title">ECS Fargate</div>
+                      <div class="svc-sub">NJinet :3000</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- arrow to Redis -->
+              <div style="display:flex;justify-content:center;gap:.5rem;margin:.5rem 0;align-items:center">
+                <div style="height:1px;flex:1;background:linear-gradient(to right,transparent,rgba(199,19,31,.5))"></div>
+                <span style="font-family:var(--mono);font-size:.48rem;color:#f87171;background:var(--surface);padding:1px 5px;border:1px solid rgba(199,19,31,.3);border-radius:100px">:6379</span>
+                <div style="height:1px;flex:1;background:linear-gradient(to left,transparent,rgba(199,19,31,.5))"></div>
+              </div>
+
+              <!-- Redis subnet -->
+              <div class="subnet" style="--subnet-color:#3F8624">
+                <div class="subnet-label">Private Subnet Group</div>
+                <div class="subnet-inner">
+                  <div class="svc-node">
+                    <div class="svc-icon-wrap" style="--svc-bg:rgba(199,19,31,.12);--svc-border:rgba(199,19,31,.4);--svc-glow:rgba(199,19,31,.3)">⚡</div>
+                    <div class="svc-title">ElastiCache Redis</div>
+                    <div class="svc-sub">cache.t3.micro</div>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- /vpc-box -->
+
+            <!-- Side services (ECR, SSM, CW, S3, ACM) -->
+            <div style="position:absolute;right:-9.5rem;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.75rem">
+              <div class="svc-node" style="min-width:80px">
+                <div class="svc-icon-wrap" style="--svc-bg:rgba(199,19,31,.08);--svc-border:rgba(199,19,31,.3);width:44px;height:44px;font-size:1rem">📦</div>
+                <div class="svc-title">ECR</div>
+              </div>
+              <div class="svc-node" style="min-width:80px">
+                <div class="svc-icon-wrap" style="--svc-bg:rgba(231,21,123,.08);--svc-border:rgba(231,21,123,.3);width:44px;height:44px;font-size:1rem">🔑</div>
+                <div class="svc-title">SSM Params</div>
+              </div>
+              <div class="svc-node" style="min-width:80px">
+                <div class="svc-icon-wrap" style="--svc-bg:rgba(231,21,123,.08);--svc-border:rgba(231,21,123,.3);width:44px;height:44px;font-size:1rem">📊</div>
+                <div class="svc-title">CloudWatch</div>
+              </div>
+              <div class="svc-node" style="min-width:80px">
+                <div class="svc-icon-wrap" style="--svc-bg:rgba(63,134,36,.08);--svc-border:rgba(63,134,36,.3);width:44px;height:44px;font-size:1rem">🗂️</div>
+                <div class="svc-title">S3</div>
+              </div>
+              <div class="svc-node" style="min-width:80px">
+                <div class="svc-icon-wrap" style="--svc-bg:rgba(231,21,123,.08);--svc-border:rgba(231,21,123,.3);width:44px;height:44px;font-size:1rem">🔒</div>
+                <div class="svc-title">ACM Cert</div>
+              </div>
+            </div>
+
+          </div><!-- /aws-region -->
+
+          <!-- LEGEND -->
+          <div class="infra-legend">
+            <div class="legend-item"><div class="legend-dot" style="--ld-color:#f48120"></div> Cloudflare CDN</div>
+            <div class="legend-item"><div class="legend-dot" style="--ld-color:#8c4fff;border-radius:50%"></div> VPC · Private Network</div>
+            <div class="legend-item"><div class="legend-dot" style="--ld-color:#147eba"></div> Public Subnet · ALB</div>
+            <div class="legend-item"><div class="legend-dot" style="--ld-color:#3f8624"></div> Private Subnet · ECS / Redis</div>
+            <div class="legend-item"><div class="legend-dot" style="--ld-color:#ed7100"></div> ECS Fargate Container</div>
+            <div class="legend-item"><div class="legend-dot" style="--ld-color:#c7131f"></div> ElastiCache Redis</div>
+          </div>
+
+        </div><!-- /infra-body -->
+      </div><!-- /infra-diagram -->
+    </div><!-- /infra-wrap -->
+
+    <!-- ── SYSTEM CONTEXT (FE / BE) ── -->
+    <div class="section-label">System Context · Frontend &amp; Backend</div>
+
+    <div class="sys-wrap">
+      <div class="sys-diagram">
+        <div class="sys-grid"></div>
+
+        <!-- chrome -->
+        <div class="infra-chrome">
+          <div class="chrome-dot" style="background:#ff5f57"></div>
+          <div class="chrome-dot" style="background:#febc2e"></div>
+          <div class="chrome-dot" style="background:#28c840"></div>
+          <div class="infra-chrome-title">njinet · system context · c1 diagram</div>
+        </div>
+
+        <!-- ── ROW 1 : CI/CD + CLIENT + CI/CD-BE ── -->
+        <div class="sys-row" style="gap:1rem;margin-bottom:.1rem">
+
+          <!-- CI/CD Frontend -->
+          <div class="sys-lane" style="background:rgba(102,102,102,.06);border:1px solid rgba(102,102,102,.25);max-width:180px">
+            <div class="sys-lane-label" style="color:#8b919f">CI / CD — Frontend</div>
+            <div class="sys-lane-inner">
+              <div class="sys-box" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);box-shadow:0 0 14px rgba(255,255,255,.04)">
+                <div class="sys-box-icon">▲</div>
+                <div class="sys-box-name">Vercel</div>
+                <div class="sys-box-sub">auto deploy</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Client Layer -->
+          <div class="sys-lane" style="background:rgba(20,126,186,.07);border:1px solid rgba(20,126,186,.3);flex:1.4;max-width:260px">
+            <div class="sys-lane-label" style="color:#147eba">Client Layer</div>
+            <div class="sys-lane-inner">
+              <div class="sys-box" style="background:rgba(20,126,186,.1);border:1px solid rgba(20,126,186,.35);box-shadow:0 0 18px rgba(20,126,186,.15)">
+                <div class="sys-box-icon">🌐</div>
+                <div class="sys-box-name">Next.js App</div>
+                <div class="sys-box-sub">React 19 · SSR</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CI/CD Backend -->
+          <div class="sys-lane" style="background:rgba(102,102,102,.06);border:1px solid rgba(102,102,102,.25);max-width:180px">
+            <div class="sys-lane-label" style="color:#8b919f">CI / CD — Backend</div>
+            <div class="sys-lane-inner">
+              <div class="sys-box" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);box-shadow:0 0 14px rgba(255,255,255,.04)">
+                <div class="sys-box-icon">⚙️</div>
+                <div class="sys-box-name">GitHub Actions</div>
+                <div class="sys-box-sub">build · push · deploy</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- arrows row 1 → 2 -->
+        <div class="sys-arrows">
+          <!-- Vercel → Next.js (deploy — left-center) -->
+          <div class="sys-arrow-col" style="flex:0.55">
+            <div class="sys-arrow-line sys-arrow-line-anim" style="background:linear-gradient(to bottom,rgba(102,102,102,.6),rgba(102,102,102,.2));animation-delay:.1s"></div>
+            <span class="sys-arrow-label" style="color:#8b919f">deploy</span>
+            <div class="sys-arrow-tip" style="border-top:5px solid rgba(102,102,102,.5)"></div>
+          </div>
+          <!-- Next.js → backend HTTP (center-left) -->
+          <div class="sys-arrow-col" style="flex:0.8">
+            <div class="sys-arrow-line sys-arrow-line-anim" style="background:linear-gradient(to bottom,rgba(20,126,186,.7),rgba(20,126,186,.15));animation-delay:.3s"></div>
+            <span class="sys-arrow-label" style="color:#147eba">HTTP REST</span>
+            <div class="sys-arrow-tip" style="border-top:5px solid rgba(20,126,186,.6)"></div>
+          </div>
+          <!-- Next.js → backend WS (center-right) -->
+          <div class="sys-arrow-col" style="flex:0.8">
+            <div class="sys-arrow-line sys-arrow-line-anim" style="background:linear-gradient(to bottom,rgba(34,211,238,.7),rgba(34,211,238,.15));animation-delay:.5s"></div>
+            <span class="sys-arrow-label" style="color:#22d3ee">Socket.IO</span>
+            <div class="sys-arrow-tip" style="border-top:5px solid rgba(34,211,238,.6)"></div>
+          </div>
+          <!-- GH Actions → AWS (right) -->
+          <div class="sys-arrow-col" style="flex:0.55">
+            <div class="sys-arrow-line sys-arrow-line-anim" style="background:linear-gradient(to bottom,rgba(251,191,36,.6),rgba(251,191,36,.15));animation-delay:.2s"></div>
+            <span class="sys-arrow-label" style="color:#fbbf24">deploy</span>
+            <div class="sys-arrow-tip" style="border-top:5px solid rgba(251,191,36,.5)"></div>
+          </div>
+        </div>
+
+        <!-- ── ROW 2 : BACKEND RUNTIME ── -->
+        <div class="sys-row" style="margin-bottom:.1rem">
+          <div class="sys-lane" style="background:rgba(102,102,102,.06);border:1px solid rgba(102,102,102,.3);width:100%">
+            <div class="sys-lane-label" style="color:#8b919f">Backend Runtime — njinet-service · NestJS</div>
+            <div class="sys-be-inner">
+              <!-- HTTP API -->
+              <div class="sys-be-box" style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.3);box-shadow:0 0 14px rgba(251,191,36,.07)">
+                <div style="font-size:1.1rem">📡</div>
+                <div class="sys-be-box-name">HTTP API</div>
+                <div class="sys-be-box-sub">REST endpoints</div>
+              </div>
+              <!-- arrow inside -->
+              <div style="width:20px;height:1px;background:linear-gradient(to right,rgba(150,115,166,.6),rgba(150,115,166,.2));flex-shrink:0"></div>
+              <!-- CQRS -->
+              <div class="sys-be-box" style="background:rgba(150,115,166,.08);border:1px solid rgba(150,115,166,.35);box-shadow:0 0 14px rgba(150,115,166,.08)">
+                <div style="font-size:1.1rem">🔀</div>
+                <div class="sys-be-box-name">CQRS Bus</div>
+                <div class="sys-be-box-sub">Command · Query · Event</div>
+              </div>
+              <!-- arrow inside -->
+              <div style="width:20px;height:1px;background:linear-gradient(to right,rgba(130,179,102,.6),rgba(130,179,102,.2));flex-shrink:0"></div>
+              <!-- WS Gateway -->
+              <div class="sys-be-box" style="background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.3);box-shadow:0 0 14px rgba(34,211,238,.07)">
+                <div style="font-size:1.1rem">🔌</div>
+                <div class="sys-be-box-name">WS Gateway</div>
+                <div class="sys-be-box-sub">Socket.IO /chat</div>
+              </div>
+              <!-- arrow inside -->
+              <div style="width:20px;height:1px;background:linear-gradient(to right,rgba(215,155,0,.6),rgba(215,155,0,.2));flex-shrink:0"></div>
+              <!-- Domain Modules -->
+              <div class="sys-be-box" style="background:rgba(215,155,0,.07);border:1px solid rgba(215,155,0,.3);box-shadow:0 0 14px rgba(215,155,0,.07)">
+                <div style="font-size:1.1rem">🧩</div>
+                <div class="sys-be-box-name">Domain Modules</div>
+                <div class="sys-be-box-sub">chat · user · space</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- arrows row 2 → 3 -->
+        <div class="sys-arrows">
+          <div class="sys-arrow-col">
+            <div class="sys-arrow-line sys-arrow-line-anim" style="background:linear-gradient(to bottom,rgba(108,142,191,.7),rgba(108,142,191,.15));animation-delay:.15s"></div>
+            <span class="sys-arrow-label" style="color:#6c8ebf">Prisma ORM</span>
+            <div class="sys-arrow-tip" style="border-top:5px solid rgba(108,142,191,.6)"></div>
+          </div>
+          <div class="sys-arrow-col">
+            <div class="sys-arrow-line sys-arrow-line-anim" style="background:linear-gradient(to bottom,rgba(130,179,102,.7),rgba(130,179,102,.15));animation-delay:.35s"></div>
+            <span class="sys-arrow-label" style="color:#82b366">IORedis · BullMQ</span>
+            <div class="sys-arrow-tip" style="border-top:5px solid rgba(130,179,102,.6)"></div>
+          </div>
+          <div class="sys-arrow-col">
+            <div class="sys-arrow-line sys-arrow-line-anim" style="background:linear-gradient(to bottom,rgba(215,155,0,.7),rgba(215,155,0,.15));animation-delay:.55s"></div>
+            <span class="sys-arrow-label" style="color:#fbbf24">AWS SDK presigned</span>
+            <div class="sys-arrow-tip" style="border-top:5px solid rgba(215,155,0,.6)"></div>
+          </div>
+          <div class="sys-arrow-col">
+            <div class="sys-arrow-line sys-arrow-line-anim" style="background:linear-gradient(to bottom,rgba(184,84,80,.7),rgba(184,84,80,.15));animation-delay:.75s"></div>
+            <span class="sys-arrow-label" style="color:#b85450">AI SDK</span>
+            <div class="sys-arrow-tip" style="border-top:5px solid rgba(184,84,80,.6)"></div>
+          </div>
+        </div>
+
+        <!-- ── ROW 3 : INFRA ── -->
+        <div class="sys-row">
+          <div class="sys-lane" style="background:rgba(30,40,50,.3);border:1px solid rgba(255,255,255,.07);width:100%">
+            <div class="sys-lane-label">Infrastructure</div>
+            <div class="sys-infra-row">
+
+              <!-- PostgreSQL -->
+              <div class="sys-box" style="background:rgba(108,142,191,.1);border:1px solid rgba(108,142,191,.35);box-shadow:0 0 18px rgba(108,142,191,.12)">
+                <div class="sys-box-icon">🐘</div>
+                <div class="sys-box-name">PostgreSQL</div>
+                <div class="sys-box-sub">Prisma ORM</div>
+              </div>
+
+              <!-- Redis -->
+              <div class="sys-box" style="background:rgba(130,179,102,.08);border:1px solid rgba(130,179,102,.3);box-shadow:0 0 18px rgba(130,179,102,.1)">
+                <div class="sys-box-icon">⚡</div>
+                <div class="sys-box-name">Redis / Valkey</div>
+                <div class="sys-box-sub">Pub/Sub · BullMQ</div>
+              </div>
+
+              <!-- S3 -->
+              <div class="sys-box" style="background:rgba(215,155,0,.08);border:1px solid rgba(215,155,0,.3);box-shadow:0 0 18px rgba(215,155,0,.1)">
+                <div class="sys-box-icon">🗂️</div>
+                <div class="sys-box-name">AWS S3</div>
+                <div class="sys-box-sub">media · archives</div>
+              </div>
+
+              <!-- LLM -->
+              <div class="sys-box" style="background:rgba(184,84,80,.1);border:1px solid rgba(184,84,80,.35);box-shadow:0 0 18px rgba(184,84,80,.12)">
+                <div class="sys-box-icon">🤖</div>
+                <div class="sys-box-name">LLM API</div>
+                <div class="sys-box-sub">AI · external</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- legend -->
+        <div class="sys-legend">
+          <div class="legend-item"><div class="legend-dot" style="--ld-color:#147eba"></div> Client · Next.js</div>
+          <div class="legend-item"><div class="legend-dot" style="--ld-color:#9673a6"></div> CQRS Bus</div>
+          <div class="legend-item"><div class="legend-dot" style="--ld-color:#22d3ee"></div> Socket.IO Gateway</div>
+          <div class="legend-item"><div class="legend-dot" style="--ld-color:#6c8ebf"></div> PostgreSQL</div>
+          <div class="legend-item"><div class="legend-dot" style="--ld-color:#82b366"></div> Redis / Valkey</div>
+          <div class="legend-item"><div class="legend-dot" style="--ld-color:#d79b00"></div> AWS S3</div>
+          <div class="legend-item"><div class="legend-dot" style="--ld-color:#b85450"></div> LLM API</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── TECH STACK ── -->
+    <div class="section-label">Tech Stack</div>
+    <div class="tech-grid" id="tech-grid"></div>
+
+    <!-- ── PRINCIPLES ── -->
+    <div class="section-label">Design Principles</div>
+    <div class="principles-grid" id="principles-grid"></div>
+
+    <footer class="page-footer">
+      <div class="footer-left">njinet · spatial chat · architect v0.1</div>
+      <div>
+        <a href="/" class="footer-link">← back to landing</a>
+        <a href="mailto:quan.ledinhvn@gmail.com" class="footer-link">contact</a>
+      </div>
+    </footer>
+
+  </div><!-- /page -->
+
+  <script>
+  // ── STARS ─────────────────────────────────────────────────────────────
+  (function() {
+    const c = document.getElementById('canvas');
+    const ctx = c.getContext('2d');
+    let W, H, stars = [];
+    function resize() { W = c.width = window.innerWidth; H = c.height = window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
+    function mk() { return { x:Math.random()*W, y:Math.random()*H, r:Math.random()*.8+.2, a:Math.random(), da:(Math.random()*.003+.001)*(Math.random()<.5?1:-1) }; }
+    for (let i=0;i<200;i++) stars.push(mk());
+    function frame() {
+      ctx.clearRect(0,0,W,H);
+      for (const s of stars) {
+        s.a = Math.max(.05, Math.min(1, s.a+s.da));
+        if (s.a<=.05||s.a>=1) s.da*=-1;
+        ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(170,199,255,${s.a*.5})`; ctx.fill();
+      }
+      requestAnimationFrame(frame);
+    }
+    frame();
+  })();
+
+  // ── TECH STACK CARDS ─────────────────────────────────────────────────
+  (function() {
+    const cards = [
+      { icon:'🌐', title:'Frontend', sub:'Client Layer', color:'#22d3ee',
+        desc:'React app with canvas-based spatial graph renderer. Nodes positioned in 2D space; edges drawn as animated bezier curves.',
+        tags:['React 19','Canvas API','WebSockets'] },
+      { icon:'🔶', title:'Cloudflare', sub:'CDN · Edge', color:'#f48120',
+        desc:'TLS termination and CDN at the edge. Routes HTTPS traffic to ALB in ap-southeast-1 with DDoS protection and caching.',
+        tags:['CDN','TLS','WAF'] },
+      { icon:'⚖️', title:'ALB · Dual-AZ', sub:'Load Balancing', color:'#147eba',
+        desc:'Application Load Balancers across two availability zones. Health-checked routing ensures zero-downtime deploys.',
+        tags:['ALB','Multi-AZ','HTTPS'] },
+      { icon:'🐳', title:'ECS Fargate', sub:'Compute Layer', color:'#ed7100',
+        desc:'Containerised Njinet app running on Fargate. No EC2 management. Images pulled from ECR, secrets from SSM Parameter Store.',
+        tags:['ECS','Fargate','ECR','SSM'] },
+      { icon:'⚡', title:'ElastiCache', sub:'Data Layer', color:'#c7131f',
+        desc:'Redis on cache.t3.micro in a private subnet. Used for session state and real-time pub/sub fan-out between ECS tasks.',
+        tags:['Redis','Pub/Sub','Sessions'] },
+      { icon:'📊', title:'Observability', sub:'Ops Layer', color:'#e7157b',
+        desc:'Container logs streamed to CloudWatch Logs. S3 for static assets and log archives. ACM manages TLS certificates.',
+        tags:['CloudWatch','S3','ACM'] },
+    ];
+    const grid = document.getElementById('tech-grid');
+    cards.forEach((c, i) => {
+      const el = document.createElement('div');
+      el.className = 'tech-card';
+      el.style.cssText = `--card-accent:${c.color};animation:fadeUpCard .6s ease ${.7+i*.1}s forwards`;
+      el.innerHTML = `
+        <span class="tech-card-icon">${c.icon}</span>
+        <div class="tech-card-title">${c.title}</div>
+        <div class="tech-card-sub">${c.sub}</div>
+        <div class="tech-card-desc">${c.desc}</div>
+        <div style="margin-top:.75rem">${c.tags.map(t=>`<span class="tech-tag">${t}</span>`).join('')}</div>
+      `;
+      grid.appendChild(el);
+    });
+  })();
+
+  // ── PRINCIPLES ───────────────────────────────────────────────────────
+  (function() {
+    const ps = [
+      { n:'01', title:'High Availability by Default',
+        desc:'Dual-AZ deployment across two ALBs and two ECS tasks. Redis in a private subnet group. A single AZ failure causes zero downtime.' },
+      { n:'02', title:'Private-first Networking',
+        desc:'ECS tasks live in private subnets with no public IP. Outbound traffic exits through NAT Gateway; inbound only via ALB listener rules.' },
+      { n:'03', title:'Secrets at Rest, Never in Code',
+        desc:'SSM Parameter Store holds all runtime secrets. ECS task roles have least-privilege IAM policies scoped to exact parameter paths.' },
+      { n:'04', title:'Immutable Deployments',
+        desc:'Each release builds a new container image tagged by commit SHA and pushed to ECR. ECS rolling updates drain old tasks before replacing.' },
+    ];
+    const grid = document.getElementById('principles-grid');
+    ps.forEach((p, i) => {
+      const el = document.createElement('div');
+      el.className = 'principle-card';
+      el.style.animation = `fadeUpCard .6s ease ${1.3+i*.12}s forwards`;
+      el.innerHTML = `
+        <div class="principle-num">${p.n}</div>
+        <div>
+          <div class="principle-title">${p.title}</div>
+          <div class="principle-desc">${p.desc}</div>
+        </div>
+      `;
+      grid.appendChild(el);
+    });
+  })();
+  </script>
+</body>
+</html>

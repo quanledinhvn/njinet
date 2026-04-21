@@ -75,6 +75,35 @@
       box-shadow: 0 0 10px var(--cyan);
       animation: blink 2s ease-in-out infinite;
     }
+    .nav-link {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.25rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      background: rgba(255,255,255,0.03);
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .nav-link:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: rgba(170,199,255,0.06);
+    }
+    .nav-link svg {
+      width: 11px; height: 11px;
+      opacity: 0.7;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .nav-link:hover svg {
+      opacity: 1;
+      transform: translateX(2px);
+    }
+
     .nav-status {
       font-family: var(--mono);
       font-size: 0.7rem;
@@ -531,6 +560,12 @@
         A shared space where conversations form naturally.
       </p>
       <p class="contact-line">Contact me to try it.</p>
+      <a href="architect.html" class="nav-link" style="margin-top:1.25rem; align-self:flex-start; opacity:0; animation: fadeUp 0.7s ease 1s forwards;">
+        architect
+        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
     </div>
 
     <!-- STATS removed (minimal copy) -->
