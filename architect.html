@@ -633,7 +633,7 @@
     /* ── TECH STACK CARDS ── */
     .tech-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 1rem;
     }
     .tech-card {
@@ -721,7 +721,7 @@
 
     @media (max-width:900px) {
       .page { padding: 1.5rem; }
-      .tech-grid { grid-template-columns: 1fr 1fr; }
+      .tech-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
       .principles-grid { grid-template-columns: 1fr; }
       .subnet-row { grid-template-columns: 1fr; }
       .edge-line { display: none; }
@@ -963,6 +963,11 @@
                 <div class="svc-icon-wrap" style="--svc-bg:rgba(231,21,123,.08);--svc-border:rgba(231,21,123,.3);width:44px;height:44px;font-size:1rem">🔒</div>
                 <div class="svc-title">ACM Cert</div>
               </div>
+              <div class="svc-node" style="min-width:80px">
+                <div class="svc-icon-wrap" style="--svc-bg:rgba(100,74,201,.12);--svc-border:rgba(100,74,201,.45);--svc-glow:rgba(100,74,201,.3);width:44px;height:44px;font-size:1rem">🏗️</div>
+                <div class="svc-title">Terraform</div>
+                <div class="svc-sub">IaC</div>
+              </div>
             </div>
 
           </div><!-- /aws-region-outer -->
@@ -975,6 +980,7 @@
             <div class="legend-item"><div class="legend-dot" style="--ld-color:#3f8624"></div> Private Subnet · ECS / Redis</div>
             <div class="legend-item"><div class="legend-dot" style="--ld-color:#ed7100"></div> ECS Fargate Container</div>
             <div class="legend-item"><div class="legend-dot" style="--ld-color:#c7131f"></div> ElastiCache Redis</div>
+            <div class="legend-item"><div class="legend-dot" style="--ld-color:#6449c9"></div> Terraform · IaC</div>
           </div>
 
         </div><!-- /infra-body -->
@@ -1242,6 +1248,9 @@
       { icon:'📊', title:'Observability', sub:'Ops Layer', color:'#e7157b',
         desc:'Container logs streamed to CloudWatch Logs. S3 for static assets and log archives. ACM manages TLS certificates.',
         tags:['CloudWatch','S3','ACM'] },
+      { icon:'🏗️', title:'Terraform', sub:'Infrastructure as Code', color:'#6449c9',
+        desc:'All AWS resources — VPC, subnets, ALBs, ECS cluster, ElastiCache, ECR, IAM roles, and SSM params — declared in HCL and versioned in Git. State stored remotely in S3 with DynamoDB locking.',
+        tags:['HCL','Remote State','S3 Backend','DynamoDB Lock'] },
     ];
     const grid = document.getElementById('tech-grid');
     cards.forEach((c, i) => {
@@ -1270,6 +1279,8 @@
         desc:'SSM Parameter Store holds all runtime secrets. ECS task roles have least-privilege IAM policies scoped to exact parameter paths.' },
       { n:'04', title:'Immutable Deployments',
         desc:'Each release builds a new container image tagged by commit SHA and pushed to ECR. ECS rolling updates drain old tasks before replacing.' },
+      { n:'05', title:'Infrastructure as Code',
+        desc:'Every AWS resource is declared in Terraform HCL, reviewed in pull requests, and applied via CI. Remote state in S3 with DynamoDB locking prevents concurrent drift.' },
     ];
     const grid = document.getElementById('principles-grid');
     ps.forEach((p, i) => {
