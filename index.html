@@ -6,7 +6,7 @@
   <title>Njinet — Spatial Chat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800;900&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -31,8 +31,7 @@
       width: 100%; height: 100%;
       background: var(--bg);
       color: var(--text);
-      font-family: var(--sans);
-      overflow: hidden;
+      overflow-x: hidden;
     }
 
     /* ── CANVAS ── */
@@ -131,6 +130,7 @@
       grid-column: 1 / 2;
       display: flex;
       flex-direction: column;
+      align-items: flex-start;
       justify-content: center;
       padding-right: 3rem;
     }
@@ -164,7 +164,9 @@
     }
 
     .body-text {
+      font-family: 'Inter', sans-serif;
       font-size: 1.05rem;
+      font-weight: 400;
       line-height: 1.7;
       color: var(--muted);
       max-width: 38ch;
@@ -172,14 +174,50 @@
       opacity: 0;
       animation: fadeUp 0.7s ease 0.7s forwards;
     }
-    .contact-line {
+    .btn-try-now {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
       font-family: var(--mono);
-      font-size: 0.75rem;
-      letter-spacing: 0.08em;
-      color: rgba(224,226,235,0.78);
-      margin-top: -1.25rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #08090f;
+      background: var(--primary);
+      padding: 0.75rem 1.6rem;
+      border-radius: 100px;
+      text-decoration: none;
+      margin-bottom: 1.5rem;
       opacity: 0;
       animation: fadeUp 0.7s ease 0.85s forwards;
+      box-shadow: 0 0 24px rgba(170,199,255,0.25), 0 2px 8px rgba(0,0,0,0.4);
+      transition: box-shadow 0.25s, transform 0.2s, background 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-try-now::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, rgba(255,255,255,0.18) 0%, transparent 60%);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+    .btn-try-now:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px rgba(170,199,255,0.45), 0 6px 20px rgba(0,0,0,0.5);
+      background: #c4d8ff;
+    }
+    .btn-try-now:active {
+      transform: translateY(0);
+    }
+    .btn-try-now svg {
+      width: 13px; height: 13px;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+    .btn-try-now:hover svg {
+      transform: translate(2px, -2px);
     }
 
     .actions {
@@ -269,17 +307,9 @@
 
     .demo-frame {
       position: relative;
-      width: min(480px, 100%);
-      aspect-ratio: 4/4.2;
-      border-radius: 1.5rem;
-      border: 1px solid var(--border);
-      background: rgba(16, 19, 26, 0.7);
-      backdrop-filter: blur(20px);
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      box-shadow:
-        0 0 0 1px rgba(170,199,255,0.08),
-        0 30px 80px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.06);
     }
 
     /* frame chrome */
@@ -313,87 +343,15 @@
       pointer-events: none;
     }
 
-    /* floating nodes inside frame */
+    /* demo canvas */
     .demo-nodes {
       position: relative;
       width: 100%; height: 100%;
       overflow: hidden;
     }
-    .node {
-      position: absolute;
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-      animation: float var(--dur, 6s) ease-in-out var(--delay, 0s) infinite alternate;
-    }
-    .node-avatar {
-      width: var(--sz, 48px); height: var(--sz, 48px);
-      border-radius: 50%;
-      border: 2.5px solid var(--col, var(--cyan));
-      box-shadow: 0 0 16px color-mix(in srgb, var(--col, var(--cyan)) 45%, transparent);
-      overflow: hidden;
-      background: var(--card);
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--mono);
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--col, var(--cyan));
-    }
-    .node-label {
-      font-family: var(--mono);
-      font-size: 0.6rem;
-      letter-spacing: 0.1em;
-      padding: 2px 8px;
-      border-radius: 100px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.7);
-      white-space: nowrap;
-    }
-    .node-bubble {
-      position: absolute;
-      top: -2.6rem;
-      left: 50%; transform: translateX(-50%);
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 0.75rem;
-      padding: 0.35rem 0.75rem;
-      font-size: 0.65rem;
-      font-family: var(--mono);
-      color: var(--text);
-      white-space: nowrap;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-      pointer-events: none;
-    }
-    .node-bubble::after {
-      content: '';
-      position: absolute;
-      bottom: -6px; left: 50%; transform: translateX(-50%);
-      width: 0; height: 0;
-      border-left: 5px solid transparent;
-      border-right: 5px solid transparent;
-      border-top: 6px solid var(--border);
-    }
-
-    /* SVG connection lines */
-    .demo-svg {
+    #demo-canvas {
       position: absolute; inset: 0;
       width: 100%; height: 100%;
-      pointer-events: none;
-      opacity: 0.25;
-    }
-    .conn-line {
-      stroke: var(--primary);
-      stroke-width: 1;
-      stroke-linecap: round;
-    }
-
-    /* grid overlay */
-    .demo-grid {
-      position: absolute; inset: 0;
-      background-image:
-        linear-gradient(rgba(170,199,255,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(170,199,255,0.04) 1px, transparent 1px);
-      background-size: 32px 32px;
-      pointer-events: none;
     }
 
     /* DECORATIVE EDGE LINES */
@@ -407,28 +365,6 @@
     .edge-line.left  { left: 3rem; }
     .edge-line.right { right: 3rem; }
 
-    /* scanning line on demo */
-    .scan-line {
-      position: absolute; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(to right, transparent, var(--primary), transparent);
-      opacity: 0.15;
-      animation: scan 4s ease-in-out infinite;
-    }
-
-    /* CORNER ACCENT top-right of demo */
-    .corner-tag {
-      position: absolute;
-      top: -1px; right: 2rem;
-      font-family: var(--mono);
-      font-size: 0.6rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      padding: 0.3rem 0.75rem;
-      background: var(--primary-2);
-      color: #fff;
-      border-radius: 0 0 0.5rem 0.5rem;
-    }
 
     /* BACKGROUND GLOW BLOBS */
     .blob {
@@ -470,19 +406,6 @@
       from { opacity: 0; }
       to   { opacity: 1; }
     }
-    @keyframes float {
-      from { transform: translate(0, 0); }
-      to   { transform: translate(var(--tx, 8px), var(--ty, -12px)); }
-    }
-    @keyframes dash {
-      to { stroke-dashoffset: -20; }
-    }
-    @keyframes scan {
-      0%   { top: -2px; opacity: 0; }
-      10%  { opacity: 0.15; }
-      90%  { opacity: 0.15; }
-      100% { top: 100%; opacity: 0; }
-    }
     @keyframes drift {
       from { transform: translate(0, 0) scale(1); }
       to   { transform: translate(30px, 20px) scale(1.1); }
@@ -503,6 +426,9 @@
         grid-column: 1 / -1;
         grid-row: 3 / 4;
         padding-top: 2rem;
+        height: 90vw;
+        min-height: 340px;
+        max-height: 520px;
       }
       .stats { grid-column: 1 / -1; }
       .main { padding-right: 0; grid-row: 2 / 3; }
@@ -543,7 +469,14 @@
     <!-- NAV -->
     <nav class="nav">
       <div class="nav-logo">njinet</div>
-      <div class="nav-status"></div>
+      <div class="nav-status">
+        <a href="architect.html" class="nav-link">
+          architect
+          <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
     </nav>
 
     <!-- MAIN COPY -->
@@ -559,9 +492,8 @@
       <p class="body-text">
         A shared space where conversations form naturally.
       </p>
-      <p class="contact-line">Contact me to try it.</p>
-      <a href="architect.html" class="nav-link" style="margin-top:1.25rem; align-self:flex-start; opacity:0; animation: fadeUp 0.7s ease 1s forwards;">
-        architect
+      <a href="https://app.njinet.site" class="btn-try-now" target="_blank" rel="noopener noreferrer">
+        Try now
         <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -573,13 +505,10 @@
     <!-- DEMO PANEL -->
     <div class="demo-panel demo-pane">
       <div class="demo-frame">
-        <span class="chrome-title demo-title">room · main</span>
+
 
         <div class="demo-nodes" id="demo-nodes" aria-label="chat graph demo">
-          <div class="demo-grid"></div>
-          <div class="scan-line"></div>
-
-          <!-- Nodes injected by JS -->
+          <canvas id="demo-canvas"></canvas>
         </div>
       </div>
     </div>
@@ -626,66 +555,353 @@
       frame();
     })();
 
-    // ── DEMO NODES ─────────────────────────────────────────────
+    // ── DEMO GRAPH (Canvas physics + cinematic sequence) ────────
     (function() {
-      const container = document.getElementById('demo-nodes');
+      const wrapper = document.getElementById('demo-nodes');
+      const cv = document.getElementById('demo-canvas');
+      const ctx = cv.getContext('2d');
 
       const COLORS = ['#22d3ee','#aac7ff','#fb7185','#2dd4bf','#fbbf24','#a78bfa'];
       const NAMES  = ['alex','mia','kai','jun','sol','ren'];
-      const MSGS   = ['ping','in focus','back soon','ok','nice',null,null,null];
-      const POSITIONS = [
-        { x: 50, y: 18 }, // top
-        { x: 78, y: 34 }, // top-right
-        { x: 78, y: 66 }, // bottom-right
-        { x: 50, y: 82 }, // bottom
-        { x: 22, y: 66 }, // bottom-left
-        { x: 22, y: 34 }, // top-left
+      const INITIALS = NAMES.map(n => n.slice(0,2).toUpperCase());
+
+      // ── Resize ──────────────────────────────────────────────
+      let W, H;
+      function resize() {
+        const r = wrapper.getBoundingClientRect();
+        W = cv.width  = r.width  * devicePixelRatio;
+        H = cv.height = r.height * devicePixelRatio;
+        cv.style.width  = r.width  + 'px';
+        cv.style.height = r.height + 'px';
+        ctx.scale(devicePixelRatio, devicePixelRatio);
+      }
+      resize();
+      window.addEventListener('resize', () => { ctx.resetTransform(); resize(); scatterNodes(); });
+
+      const w = () => cv.width  / devicePixelRatio;
+      const h = () => cv.height / devicePixelRatio;
+
+      // ── Nodes ───────────────────────────────────────────────
+      // Store normalized positions (0..1), resolved to px in physics/draw
+      // so resize always works correctly
+      const nodes = NAMES.map((name, i) => ({
+        id: i, name, color: COLORS[i], initials: INITIALS[i],
+        x: -1, y: -1, // set after first resize
+        vx: 0, vy: 0,
+        radius: i === 0 ? 26 : 20,
+        pulseT: 0,
+        alpha: 0,
+        bubble: null,
+      }));
+
+      function scatterNodes() {
+        nodes.forEach(n => {
+          n.x = w() * 0.15 + Math.random() * w() * 0.7;
+          n.y = h() * 0.15 + Math.random() * h() * 0.7;
+          // random kick breaks physics symmetry so nodes don't form columns
+          n.vx = (Math.random() - 0.5) * 4;
+          n.vy = (Math.random() - 0.5) * 4;
+        });
+      }
+
+      // edges: who is connected to whom
+      const edges = [
+        [0,1],[0,2],[0,3],[1,2],[2,4],[3,5],[4,5],[1,5]
       ];
 
-      const DRIFTS = [
-        { tx:  8, ty: -10, dur: 5.5 },
-        { tx: -6, ty:  8,  dur: 6.8 },
-        { tx: 10, ty:  6,  dur: 5.0 },
-        { tx: -8, ty: -12, dur: 7.2 },
-        { tx:  5, ty:  10, dur: 6.0 },
-        { tx: -4, ty: -8,  dur: 5.8 },
+      // ── Cinematic sequence ───────────────────────────────────
+      // Each act: { delay ms, run: fn }
+      const ACTS = [
+        // Act 0 — nodes fade in (handled by alpha ramp)
+        // Act 1 — alex says something
+        { delay: 1800, run: () => sendMsg(0, 'hey all 👋') },
+        // Act 2 — mia replies
+        { delay: 3200, run: () => { pulse(1); sendMsg(1, 'yo!') } },
+        // Act 3 — kai pulses + message flows along edge 0→2
+        { delay: 4600, run: () => { pulse(2); sendMsg(2, 'in the graph') } },
+        // Act 4 — packet travels 0→3
+        { delay: 5800, run: () => { firePacket(0, 3); sendMsg(3, 'nice 👌') } },
+        // Act 5 — new node joins (sol lights up)
+        { delay: 7200, run: () => { pulse(4); sendMsg(4, 'joining...') } },
+        // Act 6 — chain reaction: packet 4→5 + 5→0
+        { delay: 8400, run: () => { firePacket(4, 5); firePacket(5, 0); } },
+        // Act 7 — quiet, then loop
+        { delay: 10500, run: () => restartSequence() },
       ];
 
-      const nodeEls = [];
+      let actTimer = null;
+      function scheduleActs() {
+        ACTS.forEach(act => {
+          const t = setTimeout(act.run, act.delay);
+          actTimers.push(t);
+        });
+      }
+      const actTimers = [];
+      function restartSequence() {
+        actTimers.forEach(clearTimeout);
+        actTimers.length = 0;
+        nodes.forEach(n => { n.bubble = null; });
+        scheduleActs();
+      }
 
-      NAMES.forEach((name, i) => {
-        const isMe = i === 0;
-        const col  = COLORS[i];
-        const pos  = POSITIONS[i];
-        const drift= DRIFTS[i];
-        const msg  = isMe ? 'graph chat' : MSGS[i % MSGS.length];
-        const delay= (i * 0.18).toFixed(2);
-        const sz   = isMe ? '52px' : ['44px','44px','40px','44px','40px'][i-1];
+      function sendMsg(id, text) {
+        nodes[id].bubble = { text, life: 1 };
+        nodes[id].pulseT = 1;
+      }
+      function pulse(id) {
+        nodes[id].pulseT = 1;
+      }
 
-        const el = document.createElement('div');
-        el.className = 'node';
-        el.style.cssText = `
-          left: ${pos.x}%; top: ${pos.y}%;
-          --dur: ${drift.dur}s;
-          --delay: ${delay}s;
-          --tx: ${drift.tx}px;
-          --ty: ${drift.ty}px;
-          --col: ${col};
-          --sz: ${sz};
-        `;
+      // ── Packets ─────────────────────────────────────────────
+      const packets = [];
+      function firePacket(from, to) {
+        packets.push({ from, to, t: 0, col: nodes[from].color });
+      }
 
-        el.innerHTML = `
-          ${msg ? `<div class="node-bubble">${msg}</div>` : ''}
-          <div class="node-avatar" style="--col:${col};--sz:${sz}">
-            ${isMe ? '<span>YO</span>' : name.slice(0,2).toUpperCase()}
-          </div>
-          <div class="node-label">${isMe ? `you (${name})` : name}</div>
-        `;
+      // ── Physics ──────────────────────────────────────────────
+      const REPEL  = 3500;
+      const DAMP   = 0.78;
+      const CENTER = 0.004;
+      const NOISE  = 0.04; // per-frame random drift to break symmetry
 
-        container.appendChild(el);
-        nodeEls.push({ el, pos, drift, delay });
-      });
+      function physics() {
+        const cx = w() / 2, cy = h() / 2;
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const na = nodes[i], nb = nodes[j];
+            const dx = nb.x - na.x, dy = nb.y - na.y;
+            const dist2 = dx*dx + dy*dy || 1;
+            const f = REPEL / dist2;
+            const dist = Math.sqrt(dist2);
+            const fx = (dx / dist) * f;
+            const fy = (dy / dist) * f;
+            na.vx -= fx; na.vy -= fy;
+            nb.vx += fx; nb.vy += fy;
+          }
+        }
+        for (const n of nodes) {
+          // continuous noise prevents stable symmetric equilibrium
+          n.vx += (Math.random() - 0.5) * NOISE;
+          n.vy += (Math.random() - 0.5) * NOISE;
+          n.vx += (cx - n.x) * CENTER;
+          n.vy += (cy - n.y) * CENTER;
+          n.vx *= DAMP; n.vy *= DAMP;
+          n.x  += n.vx; n.y  += n.vy;
+          const pad = n.radius + 32;
+          n.x = Math.max(pad, Math.min(w() - pad, n.x));
+          n.y = Math.max(pad, Math.min(h() - pad, n.y));
+        }
+      }
 
+      // ── Draw helpers ─────────────────────────────────────────
+      function hexAlpha(hex, a) {
+        const r = parseInt(hex.slice(1,3),16);
+        const g = parseInt(hex.slice(3,5),16);
+        const b = parseInt(hex.slice(5,7),16);
+        return `rgba(${r},${g},${b},${a})`;
+      }
+
+
+      function drawNode(n) {
+        const a = n.alpha;
+        if (a <= 0) return;
+
+        // pulse ring
+        if (n.pulseT > 0) {
+          const pr = n.radius + (1 - n.pulseT) * 28;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, pr, 0, Math.PI * 2);
+          ctx.strokeStyle = hexAlpha(n.color, n.pulseT * 0.55 * a);
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          n.pulseT = Math.max(0, n.pulseT - 0.022);
+        }
+
+        // glow
+        const grd = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.radius * 2.5);
+        grd.addColorStop(0, hexAlpha(n.color, 0.18 * a));
+        grd.addColorStop(1, hexAlpha(n.color, 0));
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.radius * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
+
+        // circle fill
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+        ctx.fillStyle = hexAlpha('#10131a', a);
+        ctx.fill();
+
+        // border
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = hexAlpha(n.color, a);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // initials
+        ctx.fillStyle = hexAlpha(n.color, a);
+        ctx.font = `700 ${n.radius * 0.5}px 'Space Mono', monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(n.initials, n.x, n.y);
+
+        // name label below
+        const lw = ctx.measureText(n.name).width + 14;
+        const lh = 16, lx = n.x - lw/2, ly = n.y + n.radius + 7;
+        ctx.beginPath();
+        ctx.roundRect(lx, ly, lw, lh, 8);
+        ctx.fillStyle = hexAlpha('#1c2026', 0.92 * a);
+        ctx.fill();
+        ctx.strokeStyle = hexAlpha('#2a2f3a', a * 0.6);
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = hexAlpha('#8b919f', a);
+        ctx.font = `400 9px 'Space Mono', monospace`;
+        ctx.fillText(n.name, n.x, ly + lh / 2 + 0.5);
+      }
+
+      function drawBubble(n) {
+        if (!n.bubble || n.alpha <= 0) return;
+        const b = n.bubble;
+        const a = b.life * n.alpha;
+        const text = b.text;
+        ctx.font = `400 9.5px 'Space Mono', monospace`;
+        const tw = ctx.measureText(text).width;
+        const bw = tw + 20, bh = 24;
+        const bx = n.x - bw / 2;
+        const by = n.y - n.radius - bh - 10;
+
+        // box
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 6);
+        ctx.fillStyle = hexAlpha('#1c2026', 0.95 * a);
+        ctx.fill();
+        ctx.strokeStyle = hexAlpha('#2a2f3a', a);
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // tail
+        ctx.beginPath();
+        ctx.moveTo(n.x - 5, by + bh);
+        ctx.lineTo(n.x + 5, by + bh);
+        ctx.lineTo(n.x,     by + bh + 6);
+        ctx.closePath();
+        ctx.fillStyle = hexAlpha('#2a2f3a', a * 0.8);
+        ctx.fill();
+
+        // text
+        ctx.fillStyle = hexAlpha('#e0e2eb', a);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, n.x, by + bh / 2 + 0.5);
+
+        // fade bubble
+        b.life = Math.max(0, b.life - 0.004);
+        if (b.life <= 0) n.bubble = null;
+      }
+
+      function drawPacket(p) {
+        const na = nodes[p.from], nb = nodes[p.to];
+        const x = na.x + (nb.x - na.x) * p.t;
+        const y = na.y + (nb.y - na.y) * p.t;
+
+        // trail
+        for (let i = 1; i <= 6; i++) {
+          const tt = Math.max(0, p.t - i * 0.04);
+          const tx = na.x + (nb.x - na.x) * tt;
+          const ty = na.y + (nb.y - na.y) * tt;
+          ctx.beginPath();
+          ctx.arc(tx, ty, 2.5 * (1 - i/7), 0, Math.PI * 2);
+          ctx.fillStyle = hexAlpha(p.col, (1 - i/7) * 0.35);
+          ctx.fill();
+        }
+
+        // dot
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = hexAlpha(p.col, 0.95);
+        ctx.fill();
+
+        // glow
+        const grd = ctx.createRadialGradient(x, y, 0, x, y, 10);
+        grd.addColorStop(0, hexAlpha(p.col, 0.5));
+        grd.addColorStop(1, hexAlpha(p.col, 0));
+        ctx.beginPath();
+        ctx.arc(x, y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
+
+        p.t += 0.025;
+      }
+
+      // ── Grid overlay ─────────────────────────────────────────
+      function drawGrid() {
+        const step = 32;
+        ctx.strokeStyle = 'rgba(170,199,255,0.04)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < w(); x += step) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h()); ctx.stroke();
+        }
+        for (let y = 0; y < h(); y += step) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w(), y); ctx.stroke();
+        }
+      }
+
+      // ── Main loop ────────────────────────────────────────────
+      let t0 = null;
+      function frame(ts) {
+        if (!t0) t0 = ts;
+        const elapsed = ts - t0;
+
+        ctx.clearRect(0, 0, w(), h());
+
+        // grid
+        drawGrid();
+
+        // ramp alpha
+        nodes.forEach((n, i) => {
+          const target = 1;
+          const start  = i * 300 + 400;
+          n.alpha = Math.min(target, Math.max(0, (elapsed - start) / 600));
+        });
+
+        physics();
+
+        // packets
+        for (let i = packets.length - 1; i >= 0; i--) {
+          drawPacket(packets[i]);
+          if (packets[i].t >= 1) {
+            pulse(packets[i].to);
+            packets.splice(i, 1);
+          }
+        }
+
+        // nodes + bubbles
+        for (const n of nodes) {
+          drawNode(n);
+          drawBubble(n);
+        }
+
+        // scan line
+        const scanY = ((elapsed * 0.04) % (h() + 40)) - 20;
+        const sg = ctx.createLinearGradient(0, scanY - 2, 0, scanY + 2);
+        sg.addColorStop(0, 'transparent');
+        sg.addColorStop(0.5, 'rgba(170,199,255,0.08)');
+        sg.addColorStop(1, 'transparent');
+        ctx.fillStyle = sg;
+        ctx.fillRect(0, scanY - 2, w(), 4);
+
+        requestAnimationFrame(frame);
+      }
+
+      // Wait 2 rAF frames so mobile layout has settled before scattering
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        resize();
+        scatterNodes();
+        scheduleActs();
+        requestAnimationFrame(frame);
+      }));
     })();
   </script>
 </body>
